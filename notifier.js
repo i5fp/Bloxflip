@@ -2,7 +2,7 @@
 // @name         Rain Notifier
 // @version      1
 // @description  notifies when rain :)
-// @match        *
+// @match        *://*/*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_notification
 // @author       i5fp
