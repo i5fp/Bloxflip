@@ -2,7 +2,7 @@
 // @name         Rain Notifier
 // @version      1
 // @description  notifies when rain :)
-// @match        https://bloxflip.com/*
+// @match        **://*/*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_notification
 // @author       i5fp
@@ -11,7 +11,7 @@
 (function() {
     'use strict';
 
-    const webhookURL = "webhook here :)";
+    const webhookURL = "https://discord.com/api/webhooks/1284152019937923112/4fookgnss5WhNI2eY29VCif6b3Qo9NJQTTwU9uU9tbKzPDJoIhHqf4P3t1-Rbsf-D4z9";
     const intervalMillis = 5000;
 
     function notifyRain(rainDetails) {
