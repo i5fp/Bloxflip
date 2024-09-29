@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Bloxflip UI Predictor
 // @namespace    http://tampermonkey.net/
-// @version      1.0
-// @description  Stylish UI for Bloxflip prediction tool
+// @version      1.1
+// @description  Stylish UI for Bloxflip prediction tool with a grid display
 // @author       You
 // @match        *://bloxflip.com/*
 // @grant        none
@@ -21,8 +21,8 @@
                 <button id="close-modal">X</button>
             </div>
             <div class="modal-body">
-                <p>Bet Amount: <input type="number" id="bet-amount" value="10"></p>
-                <p>Predicted Safe Spots: <span id="safe-spots">🪐🪐🪐</span></p>
+                <p>Bet Amount: <input type="number" id="bet-amount" value="10" min="1"></p>
+                <div id="grid-container"></div>
                 <button id="predict-btn">Predict</button>
             </div>
             <div class="modal-footer">
@@ -43,10 +43,11 @@
             background: #2d2d2d;
             color: white;
             border-radius: 10px;
-            width: 300px;
+            width: 320px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.3);
             font-family: Arial, sans-serif;
-            display: none;
+            display: none; /* Set to none initially */
+            z-index: 9999;
         }
         #predictor-modal {
             padding: 20px;
@@ -78,6 +79,30 @@
         #predict-btn:hover {
             background-color: #0056b3;
         }
+        #grid-container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            gap: 5px;
+            margin: 15px 0;
+        }
+        .grid-cell {
+            width: 50px;
+            height: 50px;
+            background: #444;
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: white;
+        }
+        .safe-spot {
+            background: #28a745; /* Green for safe spots */
+        }
+        .mine {
+            background: #dc3545; /* Red for mines */
+        }
     `;
     document.head.appendChild(style);
 
@@ -85,32 +110,66 @@
     const modal = document.getElementById('bloxflip-predictor');
     const closeModal = document.getElementById('close-modal');
 
-    // Event to toggle modal
+    // Event to close modal
     closeModal.addEventListener('click', () => {
         modal.style.display = 'none';
     });
 
-    // Example: Simulate prediction and display results
-    const predictButton = document.getElementById('predict-btn');
-    const safeSpotsDisplay = document.getElementById('safe-spots');
+    // Generate a 5x5 grid
+    const gridContainer = document.getElementById('grid-container');
 
-    predictButton.addEventListener('click', () => {
-        const betAmount = document.getElementById('bet-amount').value;
-        // Simulate fetching prediction result
-        const safeSpots = Math.floor(Math.random() * 4) + 1;
-        let spots = '🪐'.repeat(safeSpots) + '🌑'.repeat(4 - safeSpots);
-
-        // Display safe spots
-        safeSpotsDisplay.innerText = spots;
-
-        // Log prediction for debugging
-        console.log(`Predicted ${safeSpots} safe spots for bet amount: ${betAmount}`);
-    });
-
-    // Key binding to open the UI (press `P` to open)
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'p') {
-            modal.style.display = 'block';
+    function createGrid() {
+        for (let i = 0; i < 25; i++) {
+            const cell = document.createElement('div');
+            cell.classList.add('grid-cell');
+            cell.dataset.index = i;
+            gridContainer.appendChild(cell);
         }
+    }
+
+    // Predict safe spots and update the grid
+    function predictSafeSpots() {
+        const cells = document.querySelectorAll('.grid-cell');
+        cells.forEach(cell => {
+            cell.classList.remove('safe-spot', 'mine');
+            cell.textContent = ''; // Clear previous predictions
+        });
+
+        // Randomly select 4-5 safe spots
+        const safeSpotCount = Math.floor(Math.random() * 2) + 4; // 4 or 5 safe spots
+        const selectedIndices = new Set();
+
+        while (selectedIndices.size < safeSpotCount) {
+            const index = Math.floor(Math.random() * 25);
+            selectedIndices.add(index);
+        }
+
+        selectedIndices.forEach(index => {
+            const cell = cells[index];
+            cell.classList.add('safe-spot');
+            cell.textContent = '🪐'; // Safe spot emoji
+        });
+
+        // Fill the rest with mines
+        cells.forEach((cell, index) => {
+            if (!cell.classList.contains('safe-spot')) {
+                cell.classList.add('mine');
+                cell.textContent = '🌑'; // Mine emoji
+            }
+        });
+    }
+
+    // Event listener for the predict button
+    document.getElementById('predict-btn').addEventListener('click', () => {
+        const betAmount = document.getElementById('bet-amount').value;
+        predictSafeSpots();
+        console.log(`Predicted safe spots for bet amount: ${betAmount}`);
     });
+
+    // Automatically display UI after page load
+    window.onload = () => {
+        createGrid();
+        modal.style.display = 'block';
+    };
+
 })();
