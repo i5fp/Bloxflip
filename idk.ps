@@ -1,0 +1,116 @@
+// ==UserScript==
+// @name         Bloxflip UI Predictor
+// @namespace    http://tampermonkey.net/
+// @version      1.0
+// @description  Stylish UI for Bloxflip prediction tool
+// @author       You
+// @match        *://bloxflip.com/*
+// @grant        none
+// ==/UserScript==
+
+(function() {
+    'use strict';
+
+    // Create a container for the UI
+    const container = document.createElement('div');
+    container.id = 'bloxflip-predictor';
+    container.innerHTML = `
+        <div id="predictor-modal">
+            <div class="modal-header">
+                <h2>Bloxflip Predictor</h2>
+                <button id="close-modal">X</button>
+            </div>
+            <div class="modal-body">
+                <p>Bet Amount: <input type="number" id="bet-amount" value="10"></p>
+                <p>Predicted Safe Spots: <span id="safe-spots">🪐🪐🪐</span></p>
+                <button id="predict-btn">Predict</button>
+            </div>
+            <div class="modal-footer">
+                <small>Powered by YourAlgorithm</small>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(container);
+
+    // Inject custom styles
+    const style = document.createElement('style');
+    style.innerHTML = `
+        #bloxflip-predictor {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #2d2d2d;
+            color: white;
+            border-radius: 10px;
+            width: 300px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            font-family: Arial, sans-serif;
+            display: none;
+        }
+        #predictor-modal {
+            padding: 20px;
+        }
+        .modal-header, .modal-footer {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        #close-modal {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: red;
+            border: none;
+            color: white;
+            padding: 5px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        #predict-btn {
+            width: 100%;
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #predict-btn:hover {
+            background-color: #0056b3;
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Show/Hide UI modal
+    const modal = document.getElementById('bloxflip-predictor');
+    const closeModal = document.getElementById('close-modal');
+
+    // Event to toggle modal
+    closeModal.addEventListener('click', () => {
+        modal.style.display = 'none';
+    });
+
+    // Example: Simulate prediction and display results
+    const predictButton = document.getElementById('predict-btn');
+    const safeSpotsDisplay = document.getElementById('safe-spots');
+
+    predictButton.addEventListener('click', () => {
+        const betAmount = document.getElementById('bet-amount').value;
+        // Simulate fetching prediction result
+        const safeSpots = Math.floor(Math.random() * 4) + 1;
+        let spots = '🪐'.repeat(safeSpots) + '🌑'.repeat(4 - safeSpots);
+
+        // Display safe spots
+        safeSpotsDisplay.innerText = spots;
+
+        // Log prediction for debugging
+        console.log(`Predicted ${safeSpots} safe spots for bet amount: ${betAmount}`);
+    });
+
+    // Key binding to open the UI (press `P` to open)
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'p') {
+            modal.style.display = 'block';
+        }
+    });
+})();
