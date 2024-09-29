@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Bloxflip UI Predictor
+// @name         Bloxflip UI Predictor with Game Nonce and Movable UI
 // @namespace    http://tampermonkey.net/
-// @version      1.1
-// @description  Stylish UI for Bloxflip prediction tool with a grid display
+// @version      1.5
+// @description  Stylish UI for Bloxflip prediction tool with grid display, game nonce logic, and movable UI
 // @author       You
 // @match        *://bloxflip.com/*
 // @grant        none
@@ -10,6 +10,8 @@
 
 (function() {
     'use strict';
+
+    const predictions = {}; // Store predictions based on game IDs
 
     // Create a container for the UI
     const container = document.createElement('div');
@@ -21,6 +23,7 @@
                 <button id="close-modal">X</button>
             </div>
             <div class="modal-body">
+                <p>Game ID: <input type="text" id="game-id" placeholder="Enter your Game ID" required></p>
                 <p>Bet Amount: <input type="number" id="bet-amount" value="10" min="1"></p>
                 <div id="grid-container"></div>
                 <button id="predict-btn">Predict</button>
@@ -48,6 +51,7 @@
             font-family: Arial, sans-serif;
             display: none; /* Set to none initially */
             z-index: 9999;
+            cursor: move; /* Allow moving */
         }
         #predictor-modal {
             padding: 20px;
@@ -106,70 +110,79 @@
     `;
     document.head.appendChild(style);
 
-    // Show/Hide UI modal
-    const modal = document.getElementById('bloxflip-predictor');
-    const closeModal = document.getElementById('close-modal');
+    // Function to move the modal
+    let isDragging = false;
+    let offsetX, offsetY;
 
-    // Event to close modal
-    closeModal.addEventListener('click', () => {
-        modal.style.display = 'none';
+    container.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        offsetX = e.clientX - container.getBoundingClientRect().left;
+        offsetY = e.clientY - container.getBoundingClientRect().top;
     });
 
-    // Generate a 5x5 grid
-    const gridContainer = document.getElementById('grid-container');
+    document.addEventListener('mousemove', (e) => {
+        if (isDragging) {
+            container.style.left = `${e.clientX - offsetX}px`;
+            container.style.top = `${e.clientY - offsetY}px`;
+        }
+    });
 
-    function createGrid() {
+    document.addEventListener('mouseup', () => {
+        isDragging = false;
+    });
+
+    // Close the modal
+    document.getElementById('close-modal').onclick = () => {
+        container.style.display = 'none';
+    };
+
+    // Generate a random grid and prediction
+    function generateGrid() {
+        const gridContainer = document.getElementById('grid-container');
+        gridContainer.innerHTML = '';
+        const safeSpots = Math.floor(Math.random() * (2)) + 4; // Randomly choose 4 or 5 safe spots
+
+        let totalCells = 25; // Total cells in a 5x5 grid
+        let safeSpotCount = 0;
+
+        while (safeSpotCount < safeSpots) {
+            const index = Math.floor(Math.random() * totalCells);
+            const cell = gridContainer.children[index];
+
+            if (cell && !cell.classList.contains('safe-spot')) {
+                cell.classList.add('safe-spot');
+                cell.innerText = '🪐'; // Safe spot emoji
+                safeSpotCount++;
+            }
+        }
+
+        // Fill remaining cells with mines
         for (let i = 0; i < 25; i++) {
-            const cell = document.createElement('div');
-            cell.classList.add('grid-cell');
-            cell.dataset.index = i;
-            gridContainer.appendChild(cell);
-        }
-    }
-
-    // Predict safe spots and update the grid
-    function predictSafeSpots() {
-        const cells = document.querySelectorAll('.grid-cell');
-        cells.forEach(cell => {
-            cell.classList.remove('safe-spot', 'mine');
-            cell.textContent = ''; // Clear previous predictions
-        });
-
-        // Randomly select 4-5 safe spots
-        const safeSpotCount = Math.floor(Math.random() * 2) + 4; // 4 or 5 safe spots
-        const selectedIndices = new Set();
-
-        while (selectedIndices.size < safeSpotCount) {
-            const index = Math.floor(Math.random() * 25);
-            selectedIndices.add(index);
-        }
-
-        selectedIndices.forEach(index => {
-            const cell = cells[index];
-            cell.classList.add('safe-spot');
-            cell.textContent = '🪐'; // Safe spot emoji
-        });
-
-        // Fill the rest with mines
-        cells.forEach((cell, index) => {
+            const cell = gridContainer.children[i];
             if (!cell.classList.contains('safe-spot')) {
                 cell.classList.add('mine');
-                cell.textContent = '🌑'; // Mine emoji
+                cell.innerText = '🌑'; // Mine emoji
             }
-        });
+        }
     }
 
-    // Event listener for the predict button
-    document.getElementById('predict-btn').addEventListener('click', () => {
-        const betAmount = document.getElementById('bet-amount').value;
-        predictSafeSpots();
-        console.log(`Predicted safe spots for bet amount: ${betAmount}`);
-    });
-
-    // Automatically display UI after page load
-    window.onload = () => {
-        createGrid();
-        modal.style.display = 'block';
+    // Add event listener to predict button
+    document.getElementById('predict-btn').onclick = () => {
+        const gameId = document.getElementById('game-id').value;
+        if (gameId) {
+            if (!predictions[gameId]) {
+                predictions[gameId] = [];
+                generateGrid(); // Generate a new grid when predicting for a new game ID
+            } else {
+                alert(`Predictions already made for Game ID: ${gameId}`);
+            }
+        } else {
+            alert('Please enter your Game ID.');
+        }
     };
+
+    // Show the UI when the script runs
+    container.style.display = 'block';
+    generateGrid(); // Initial grid generation
 
 })();
